@@ -1,8 +1,4 @@
 *.class
 out
-intellij-community
 build
-.gradle
-*.iml
-*.ipr
-*.iws
+intellij-community

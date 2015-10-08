@@ -1,16 +1,20 @@
 package com.github.setial.intellijjavadocs.action;
 
+import com.github.setial.intellijjavadocs.exception.TemplateNotFoundException;
 import com.github.setial.intellijjavadocs.generator.JavaDocGenerator;
 import com.github.setial.intellijjavadocs.generator.impl.ClassJavaDocGenerator;
 import com.github.setial.intellijjavadocs.generator.impl.FieldJavaDocGenerator;
 import com.github.setial.intellijjavadocs.generator.impl.MethodJavaDocGenerator;
 import com.github.setial.intellijjavadocs.operation.JavaDocWriter;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -19,10 +23,10 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,7 +35,9 @@ import java.util.List;
  *
  * @author Sergey Timofiychuk
  */
-public class JavaDocGenerateAction extends AnAction {
+public class JavaDocGenerateAction extends BaseAction {
+
+    private static final Logger LOGGER = Logger.getInstance(JavaDocGenerateAction.class);
 
     private JavaDocWriter writer;
 
@@ -39,6 +45,16 @@ public class JavaDocGenerateAction extends AnAction {
      * Instantiates a new Java doc generate action.
      */
     public JavaDocGenerateAction() {
+        this(new JavaDocHandler());
+    }
+
+    /**
+     * Instantiates a new Java doc generate action.
+     *
+     * @param handler the handler
+     */
+    public JavaDocGenerateAction(CodeInsightActionHandler handler) {
+        super(handler);
         writer = ServiceManager.getService(JavaDocWriter.class);
     }
 
@@ -47,17 +63,26 @@ public class JavaDocGenerateAction extends AnAction {
      *
      * @param e the Event
      */
+    @Override
     public void actionPerformed(AnActionEvent e) {
+        DumbService dumbService = DumbService.getInstance(e.getProject());
+        if (dumbService.isDumb()) {
+            dumbService.showDumbModeNotification("Javadocs plugin is not available during indexing");
+            return;
+        }
+
         Editor editor = DataKeys.EDITOR.getData(e.getDataContext());
         if (editor == null) {
-            // TODO show message
+            LOGGER.error("Cannot get com.intellij.openapi.editor.Editor");
+            Messages.showErrorDialog("Javadocs plugin is not available", "Javadocs plugin");
             return;
         }
         int startPosition = editor.getSelectionModel().getSelectionStart();
         int endPosition = editor.getSelectionModel().getSelectionEnd();
         PsiFile file = DataKeys.PSI_FILE.getData(e.getDataContext());
         if (file == null) {
-            // TODO show message
+            LOGGER.error("Cannot get com.intellij.psi.PsiFile");
+            Messages.showErrorDialog("Javadocs plugin is not available", "Javadocs plugin");
             return;
         }
         List<PsiElement> elements = new LinkedList<PsiElement>();
@@ -87,10 +112,16 @@ public class JavaDocGenerateAction extends AnAction {
     protected void processElement(@NotNull PsiElement element) {
         JavaDocGenerator generator = getGenerator(element);
         if (generator != null) {
-            @SuppressWarnings("unchecked")
-            PsiDocComment javaDoc = generator.generate(element);
-            if (javaDoc != null) {
-                writer.write(javaDoc, element);
+            try {
+                @SuppressWarnings("unchecked")
+                PsiDocComment javaDoc = generator.generate(element);
+                if (javaDoc != null) {
+                    writer.write(javaDoc, element);
+                }
+            } catch (TemplateNotFoundException e) {
+                LOGGER.warn(e);
+                String message = "Javadocs plugin is not available. Can not find suitable template for the element:\n{0}";
+                Messages.showWarningDialog(MessageFormat.format(message, e.getMessage()), "Javadocs plugin");
             }
         }
     }

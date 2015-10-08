@@ -1,6 +1,7 @@
 package com.github.setial.intellijjavadocs.template;
 
-import org.apache.velocity.Template;
+import com.intellij.openapi.components.ProjectComponent;
+import freemarker.template.Template;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ import java.util.Map;
  *
  * @author Sergey Timofiychuk
  */
-public interface DocTemplateProcessor {
+public interface DocTemplateProcessor extends ProjectComponent {
 
     /**
      * The constant COMPONENT_NAME.
@@ -26,13 +27,12 @@ public interface DocTemplateProcessor {
      * @return the String
      */
     @NotNull
-    String merge(@Nullable Template template, @NotNull Map<String, Object> params);
+    String merge(@NotNull Template template, @NotNull Map<String, Object> params);
 
     /**
      * Builds the description.
      *
-     *
-     * @param description the Description
+     * @param description     the Description
      * @param capitalizeFirst the flag shows whether first word should be capitalized
      * @return generated description
      */
@@ -48,5 +48,14 @@ public interface DocTemplateProcessor {
      */
     @NotNull
     String buildPartialDescription(@NotNull String description);
+
+    /**
+     * Builds the description for the methods like getter, setter. The result will be a field name for get/set method.
+     *
+     * @param description the description
+     * @return generated description
+     */
+    @NotNull
+    String buildFieldDescription(@NotNull String description);
 
 }
