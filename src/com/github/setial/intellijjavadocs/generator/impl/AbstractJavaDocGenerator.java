@@ -9,6 +9,7 @@ import com.github.setial.intellijjavadocs.model.settings.Visibility;
 import com.github.setial.intellijjavadocs.template.DocTemplateManager;
 import com.github.setial.intellijjavadocs.template.DocTemplateProcessor;
 import com.github.setial.intellijjavadocs.utils.JavaDocUtils;
+import com.github.setial.intellijjavadocs.utils.StringUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.PomNamedTarget;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +76,8 @@ public abstract class AbstractJavaDocGenerator<T extends PsiElement> implements 
                 default:
                     if (oldDocComment != null) {
                         result = updateJavaDocAction(element, oldDocComment);
-                    } else {
+                    }
+                    else {
                         result = replaceJavaDocAction(element);
                     }
                     break;
@@ -131,9 +134,9 @@ public abstract class AbstractJavaDocGenerator<T extends PsiElement> implements 
      */
     protected boolean shouldGenerate(PsiModifierList modifiers) {
         return checkModifiers(modifiers, PsiModifier.PUBLIC, Visibility.PUBLIC) ||
-                checkModifiers(modifiers, PsiModifier.PROTECTED, Visibility.PROTECTED) ||
-                checkModifiers(modifiers, PsiModifier.PACKAGE_LOCAL, Visibility.DEFAULT) ||
-                checkModifiers(modifiers, PsiModifier.PRIVATE, Visibility.PRIVATE);
+            checkModifiers(modifiers, PsiModifier.PROTECTED, Visibility.PROTECTED) ||
+            checkModifiers(modifiers, PsiModifier.PACKAGE_LOCAL, Visibility.DEFAULT) ||
+            checkModifiers(modifiers, PsiModifier.PRIVATE, Visibility.PRIVATE);
     }
 
     /**
@@ -147,7 +150,13 @@ public abstract class AbstractJavaDocGenerator<T extends PsiElement> implements 
         params.put("element", element);
         params.put("name", getDocTemplateProcessor().buildDescription(element.getName(), true));
         params.put("partName", getDocTemplateProcessor().buildPartialDescription(element.getName()));
-        params.put("splitNames", StringUtils.splitByCharacterTypeCamelCase(element.getName()));
+        // 添加对camel和underscore的支持
+        if (StringUtil.isLowerCamelFormat(element.getName())) {
+            params.put("splitNames", StringUtils.splitByCharacterTypeCamelCase(element.getName()));
+        }
+        else {
+            params.put("splitNames", StringUtil.splitByCharacterTypeUnderscore(element.getName()));
+        }
         return params;
     }
 
@@ -176,7 +185,7 @@ public abstract class AbstractJavaDocGenerator<T extends PsiElement> implements 
     private boolean checkModifiers(PsiModifierList modifiers, String modifier, Visibility visibility) {
         JavaDocSettings configuration = getSettings().getConfiguration();
         return modifiers != null && modifiers.hasModifierProperty(modifier) && configuration != null &&
-                configuration.getGeneralSettings().getVisibilities().contains(visibility);
+            configuration.getGeneralSettings().getVisibilities().contains(visibility);
     }
 
     /**

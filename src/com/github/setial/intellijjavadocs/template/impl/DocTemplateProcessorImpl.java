@@ -3,6 +3,7 @@ package com.github.setial.intellijjavadocs.template.impl;
 import com.github.setial.intellijjavadocs.exception.SetupTemplateException;
 import com.github.setial.intellijjavadocs.exception.TemplateNotFoundException;
 import com.github.setial.intellijjavadocs.template.DocTemplateProcessor;
+import com.github.setial.intellijjavadocs.utils.StringUtil;
 import com.github.setial.intellijjavadocs.utils.XmlUtils;
 import freemarker.template.Template;
 import org.apache.commons.lang3.StringUtils;
@@ -95,7 +96,13 @@ public class DocTemplateProcessorImpl implements DocTemplateProcessor {
     }
 
     private String buildDescription(String description, int firstElement, boolean capitalizeFirst) {
-        String[] parts = StringUtils.splitByCharacterTypeCamelCase(description.replaceAll("<.+>", ""));
+        String str = description.replaceAll("<.+>", "");
+        String[] parts;
+        if (StringUtil.isLowerCamelFormat(str)){
+            parts = StringUtils.splitByCharacterTypeCamelCase(str);
+        }else {
+            parts = StringUtil.splitByCharacterTypeUnderscore(str);
+        }
         parts = removeInterfacePrefix(parts);
         parts = removeClassSuffix(parts);
         parts = removeSpecialSymbols(parts);
