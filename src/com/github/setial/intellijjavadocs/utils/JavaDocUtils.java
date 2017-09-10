@@ -31,7 +31,7 @@ import java.util.Map.Entry;
  */
 public class JavaDocUtils {
 
-    private static final List<String> MERGE_TAG_NAMES = Arrays.asList("param", "throws");
+    private static final List<String> MERGE_TAG_NAMES = Arrays.asList("param", "throws", "return");
 
     /**
      * Convert java doc.
