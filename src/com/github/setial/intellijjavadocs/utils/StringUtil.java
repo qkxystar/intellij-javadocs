@@ -10,11 +10,20 @@ public class StringUtil {
 
     private static final String LOWER_CAMEL_FORMAT = "^[a-z][\\d\\w]+";
 
+    private static final String CAMEL_FORMAT = "[\\d\\w]+";
+
     public static Boolean isLowerCamelFormat(String str) {
         if (StringUtils.isBlank(str)) {
             return false;
         }
         return str.matches(LOWER_CAMEL_FORMAT);
+    }
+
+    public static Boolean isCamelFormat(String str) {
+        if (StringUtils.isBlank(str)) {
+            return false;
+        }
+        return str.matches(CAMEL_FORMAT);
     }
 
     public static String[] splitByCharacterTypeUnderscore(String str) {

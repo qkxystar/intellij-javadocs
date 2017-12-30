@@ -98,7 +98,7 @@ public class DocTemplateProcessorImpl implements DocTemplateProcessor {
     private String buildDescription(String description, int firstElement, boolean capitalizeFirst) {
         String str = description.replaceAll("<.+>", "");
         String[] parts;
-        if (StringUtil.isLowerCamelFormat(str)){
+        if (StringUtil.isCamelFormat(str)){
             parts = StringUtils.splitByCharacterTypeCamelCase(str);
         }else {
             parts = StringUtil.splitByCharacterTypeUnderscore(str);
